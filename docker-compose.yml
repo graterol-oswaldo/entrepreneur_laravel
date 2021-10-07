@@ -1,45 +1,51 @@
-version: '3'
+version: "3"
 
 services:
   #PHP Service
-  app_service:
+  php_entrepreneur_service:
     build: ./php/
-    container_name: app_service
+    container_name: php_entrepreneur_service
+    depends_on:
+      - pgsql_entrepreneur_service
     volumes:
       - ./src:/var/www
     networks:
-      - service-network
+      - service-entrepreneur-network
 
   #Nginx Service
-  nginx_service:
+  nginx_entrepreneur_service:
     image: nginx:alpine
-    container_name: nginx_service
+    container_name: nginx_entrepreneur_service
+    depends_on:
+      - php_entrepreneur_service
+      - pgsql_entrepreneur_service
     ports:
-      - "80:80"
-      - "443:443"
+      - "8000:80"
+      - "8443:443"
     volumes:
       - ./src:/var/www
-      - ./nginx/:/etc/nginx/conf.d/
+      - ./nginx:/etc/nginx/conf.d
     networks:
-      - service-network
+      service-entrepreneur-network:
+        aliases:
+          - backend.entrepreneur.com
 
   #Postgres Service
-  pgsql_service:
-    container_name: pgsql_service
+  pgsql_entrepreneur_service:
+    container_name: pgsql_entrepreneur_service
     image: postgres:13
     ports:
       - "${POSTGRES_PORT}:5432"
     environment:
-      PGPASSWORD: ${PGPASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - "./postgresql:/var/lib/postgresql/data"
     networks:
-      - service-network
+      - service-entrepreneur-network
 
 #Docker Networks
 networks:
-  service-network:
+  service-entrepreneur-network:
     driver: bridge
