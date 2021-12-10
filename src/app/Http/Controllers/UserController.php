@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -17,7 +18,7 @@ class UserController extends Controller
     public function index()
     {
         if (Auth::user()->isAdmin()) {
-            return UserResource::collection(User::paginate(10));
+            return UserResource::collection(User::paginate(5));
         }
         return  response()->json(["message" => "Forbidden"], 403);
     }
@@ -27,10 +28,27 @@ class UserController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+     */ 
+    public function store(Request $request) : \Illuminate\Http\JsonResponse
     {
-        //
+
+        $validated = $request->validate([
+            'name' => 'required',
+            'password' => 'required',
+            'email' => 'required',
+            'role_id' => 'required',
+        ]);
+
+        //dd($validate);
+     
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = Hash::make($request->password);
+        $user->role_id = $request->role_id;
+        $user->save();
+        return response()->json(["message"=> "Usuario creado"], 201);
+        //return  response()->json(["message" => "Forbidden"], 403);
     }
 
     /**
@@ -51,12 +69,21 @@ class UserController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  \App\Models\User $user
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user) : \Illuminate\Http\JsonResponse
     {
-        //
+      if (Auth::user()->isAdmin()) {
+        $data = $request->all();
+        if (isset($data["password"]) && $data["password"] )
+          $data["password"] = Hash::make($data["password"]);
+        else
+          unset($data["password"]); 
+        $user->update($data);
+        return response()->json(["message"=> "Usuario actualizado"], 200);
+      }
+      return  response()->json(["message" => "Forbidden"], 403);
     }
 
     /**
