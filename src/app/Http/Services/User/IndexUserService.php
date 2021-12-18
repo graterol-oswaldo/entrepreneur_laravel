@@ -44,16 +44,14 @@ class IndexUserService
         $users = $query
             ->paginate(5)
             ->appends(request()->query());
-        return response()->json($users);
-        
-        //return response(User::paginate(5));
-        
-        //return Inertia::render("Users/Index", [
-        //    "rows" => $users,
-        //    "sort" => $request->query("sort"),
-        //    "direction" => $request->query("direction"),
-        //    "search" => $request->query("search"),
-        //]);
+
+        return response()->json([
+            "rows" => $users,
+            "sort" => $request->query("sort"),
+            "direction" => $request->query("direction"),
+            "search" => $request->query("search")
+        ]);
+
     }
 
 }
